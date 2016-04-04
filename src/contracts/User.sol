@@ -6,9 +6,9 @@ contract User {
         delegates[msg.sender] = true;
     }
 
-    function authorize(address delegate) {
+    function authorize(address grant) {
         if(!delegates[msg.sender]) throw;
-        address.authorize();
+        Grant(grant).authorize();
     }
 
     function createDelegate(address delegate) {

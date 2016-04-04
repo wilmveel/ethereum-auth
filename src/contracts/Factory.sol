@@ -2,7 +2,7 @@ contract UserFactory {
 
     User user;
 
-    function createUser(bytes32 name) {
+    function createUser() {
         user = new User();
     }
 
