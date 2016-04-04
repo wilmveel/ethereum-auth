@@ -1,0 +1,26 @@
+{
+  "name": "ethereumjs-tx-test",
+  "version": "1.0.0",
+  "description": "",
+  "main": "webpack.config.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "ethereumjs-tx": "^1.1.1",
+    "ethereumjs-util": "^4.3.0",
+    "express": "^4.13.4",
+    "hooked-web3-provider": "^1.0.0",
+    "html-loader": "^0.4.3",
+    "http-proxy-middleware": "^0.13.0",
+    "js-base64": "^2.1.9",
+    "json-loader": "^0.5.4",
+    "jsonwebtoken": "^5.7.0",
+    "secp256k1": "^3.0.1",
+    "web3": "^0.15.3",
+    "webpack": "^1.12.14",
+    "webpack-dev-middleware": "^1.5.1"
+  }
+}
