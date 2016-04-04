@@ -4,11 +4,11 @@ contract Grant {
     address user;
 
     function Grant() {
-        app = msg.sender
+        app = msg.sender;
     }
 
     function authorize() {
-        user = msg.sender
+        user = msg.sender;
     }
 
 }

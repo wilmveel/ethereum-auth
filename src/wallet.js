@@ -3,8 +3,29 @@ var crypto = require('crypto');
 var ethereumjsTx = require('ethereumjs-tx');
 var ethereumjsUtil = require('ethereumjs-util');
 
-module.exports = function (privateKey) {
+var Web3 = require('web3');
+var HookedWeb3Provider = require('hooked-web3-provider');
 
-    var privarteKey = crypto.random(32)
+module.exports =  function(privateKey){
+
+    if(!privateKey)
+        privateKey = crypto.randomBytes(32);
+
+    var web3 = new Web3();
+
+    var signer = require('./signer')(privateKey);
+
+    var hookedWeb3Provider = new HookedWeb3Provider({
+        host: "http://128.199.53.68:8545",
+        transaction_signer: signer
+    });
+
+    web3.setProvider(hookedWeb3Provider);
+
+    return {
+        address: ethereumjsUtil.privateToAddress(privateKey),
+        eth: web3.eth
+    }
+
 
 };

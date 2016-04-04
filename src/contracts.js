@@ -6,12 +6,9 @@ require.extensions['.sol'] = function (module, filename) {
 
 
 var contracts = {
-    //app: require('./contracts/App.sol'),
+    app: require('./contracts/App.sol'),
     user: require('./contracts/User.sol'),
-    userFactory: require('./contracts/UserFactory.sol'),
-    token: require('./contracts/Token.sol'),
-    getterSetter: require('./contracts/GetterSetter.sol'),
-    //resource: require('./contracts/Resource.sol')
+    grant: require('./contracts/Grant.sol')
 };
 
 var all = ""
