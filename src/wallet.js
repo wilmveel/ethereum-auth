@@ -11,6 +11,8 @@ module.exports =  function(privateKey){
     if(!privateKey)
         privateKey = crypto.randomBytes(32);
 
+    var address = ethereumjsUtil.privateToAddress(privateKey);
+
     var web3 = new Web3();
 
     var signer = require('./signer')(privateKey);
@@ -21,9 +23,10 @@ module.exports =  function(privateKey){
     });
 
     web3.setProvider(hookedWeb3Provider);
+    web3.eth.defaultAccount = ethereumjsUtil.bufferToHex(address);
 
     return {
-        address: ethereumjsUtil.privateToAddress(privateKey),
+        address: ethereumjsUtil.bufferToHex(address),
         eth: web3.eth
     }
 

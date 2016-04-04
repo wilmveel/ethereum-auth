@@ -11,4 +11,9 @@ contract Grant {
         user = msg.sender;
     }
 
+    function state() constant returns (address b, address a){
+        a = app;
+        b = user;
+    }
+
 }

@@ -26,13 +26,14 @@ describe('GrantFlow', function () {
     var userWallet;
 
     var grantContract;
+    var userContract;
 
     it('should create a app wallet and transfer 1 ether', function (done) {
 
         appWallet = new Wallet();
         var transaction = web3.eth.sendTransaction({
                 from: web3.eth.coinbase,
-                to: ethereumjsUtil.bufferToHex(appWallet.address),
+                to: appWallet.address,
                 value: web3.toWei(1, "ether")
             }
         )
@@ -50,7 +51,7 @@ describe('GrantFlow', function () {
         userWallet = new Wallet();
         var transaction = web3.eth.sendTransaction({
                 from: web3.eth.coinbase,
-                to: ethereumjsUtil.bufferToHex(userWallet.address),
+                to: userWallet.address,
                 value: web3.toWei(1, "ether")
             }
         )
@@ -63,15 +64,14 @@ describe('GrantFlow', function () {
 
     });
 
-    it('app creates grant contract', function (done) {
+    it('should create grant contract by app', function (done) {
 
         var abi = compiled.Grant.info.abiDefinition;
         var code = compiled.Grant.code;
 
         appWallet.eth.contract(abi).new({
             gas: 5000000000000000000000,
-            data: code,
-            from: ethereumjsUtil.bufferToHex(appWallet.address)
+            data: code
         }, function (err, contract) {
             if (err) {
                 console.log("Contract creation error", err);
@@ -84,19 +84,68 @@ describe('GrantFlow', function () {
         });
     });
 
-    it('app creates grant contract', function (done) {
+    it('should create user contract by user', function (done) {
 
-        var abi = compiled.Grant.info.abiDefinition;
-        var code = compiled.Grant.code;
+        var abi = compiled.User.info.abiDefinition;
+        var code = compiled.User.code;
 
-        userWallet.eth.contract(abi).at(grantContract, function (err, contract) {
+        userWallet.eth.contract(abi).new({
+            gas: 5000000000000000000000,
+            data: code,
+        }, function (err, contract) {
             if (err) {
                 console.log("Contract creation error", err);
                 done(err);
             } else if (contract.address) {
                 console.log("Contract Created", contract.address);
-                grantContract = contract.address;
+                userContract = contract.address;
                 done();
+            }
+        });
+    });
+
+    it('should authorize grant contract by user contract', function (done) {
+
+        var abi = compiled.User.info.abiDefinition;
+        var code = compiled.User.code;
+
+        userWallet.eth.contract(abi).at(userContract, function (err, contract) {
+            if (err) {
+                console.log("Contract creation error", err);
+                done(err);
+            } else if (contract.address) {
+                console.log("Contract Fetch", contract.address);
+                contract.authorize(grantContract, {
+                    gas: 5000000000000000000000
+                }, function (err, transaction) {
+                    console.log(err, transaction);
+                    watch(transaction, function (err, res) {
+                        console.log(err, res);
+                        done();
+                    });
+                });
+            }
+        });
+    });
+
+
+    it('should get state of grant contract', function (done) {
+
+        var abi = compiled.Grant.info.abiDefinition;
+        var code = compiled.Grant.code;
+
+        web3.eth.contract(abi).at(grantContract, function (err, contract) {
+            if (err) {
+                console.log("Contract creation error", err);
+                done(err);
+            } else if (contract.address) {
+                console.log("Contract Fetch", contract.address);
+                contract.state(function (err, res) {
+                    console.log('state', res);
+                    assert.equal(userContract, res[0]);
+                    assert.equal(appWallet.address, res[1]);
+                    done();
+                });
             }
         });
     });
