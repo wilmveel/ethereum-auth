@@ -1,23 +1,20 @@
 contract PasswordDelegate{
 
-    address private user;
+    address user;
 
-    bytes32 private challenge;
-    bytes32 private response;
+    bytes32 challenge;
+    bytes24 response;
 
-
-    function PasswordDelegate(address _user, bytes32 _challenge, bytes32 _response){
-        user = _user;
+    function PasswordDelegate(bytes32 _challenge, bytes24 _response){
         challenge = _challenge;
         response = _response;
     }
 
-    function challenge() constant returns(bytes32 challenge){
+    function getChallenge() constant returns(bytes32){
         return challenge;
     }
 
-    function response(bytes32 _response, address grant ){
-        if(response != _response) throw;
-        User(user).authorize(grant);
+    function authorize(uint8 v, bytes32 r, bytes32 s ) constant returns(address){
+        return ecrecover(challenge, v, r, s);
     }
 }
