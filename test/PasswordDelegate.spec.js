@@ -15,7 +15,7 @@ describe('PasswordDelegate', function () {
 
     this.timeout(1000000);
 
-    var DEFAULT_GAS = 50000000000000;
+    var DEFAULT_GAS = 5000000;
 
     var web3 = new Web3();
     var watch = new Watch(web3);
@@ -27,82 +27,72 @@ describe('PasswordDelegate', function () {
 
     var compiled = web3.eth.compile.solidity(contracts);
 
-    var wallet;
+
     var passwordDelegateContract;
 
-    var password = new Buffer(web3.sha3('wilm123456'));
+    var password = new Buffer(web3.sha3('wilm123456'), 'hex');
 
-    var challenge;
+    var salt = crypto.randomBytes(32);
+    console.log('salt:', salt.toString('hex'));
+
     var response;
 
-    var privateKey;
-
-    var signature = {};
-
-    function createPrivateKey(challenge, password) {
-        return Buffer.concat([
-            password.slice(0, 8),
-            challenge.slice(8, 16),
-            password.slice(24, 32),
-            challenge.slice(16, 24)
-        ]);
-
+    function createPrivateKey(password, salt) {
+        if (!salt) return password;
+        return new Buffer(web3.sha3(password.toString('hex') + salt.toString('hex')), 'hex');
     }
 
-    it('should create create chalange', function (done) {
+    it('should quick init', function (done) {
 
-        challenge = crypto.randomBytes(32);
+        var abi = compiled.PasswordDelegate.info.abiDefinition;
+
+        web3.eth.contract(abi).at('0x8b98b888d20056b41b15437d20b38a8f5d22e46a', callback);
+
+        function callback(err, contract) {
+            if (err) {
+                console.log("Contract creation error", err);
+                done(err);
+            } else if (contract.address) {
+                console.log("passwordDelegateContract:", contract.address);
+                //passwordDelegateContract = contract;
+                done();
+            }
+        };
+
+    });
+
+
+    it('should create response', function (done) {
+
+        if(passwordDelegateContract) return done();
+
+        var challenge = crypto.randomBytes(32);
         console.log('challenge:', challenge.toString('hex'));
 
-        var privateKey = createPrivateKey(challenge, password);
+        var privateKey = createPrivateKey(password, salt);
         console.log('privateKey:', privateKey.toString('hex'));
+
+        var sign = secp256k1.sign(challenge, privateKey);
+        console.log(sign);
+
+        var recover = secp256k1.recover(challenge, new Buffer(sign.signature, 'hex'), sign.recovery);
+        console.log('recover:', recover.toString('hex'));
 
         response = ethereumjsUtil.privateToAddress(privateKey);
         console.log('response:', response.toString('hex'));
-
-
-        var sign = secp256k1.sign(challenge, privateKey);
-
-        signature.r = sign.signature.slice(0, 32);
-        signature.s = sign.signature.slice(32, 64);
-        signature.v = sign.recovery + 27;
-
-        console.log(signature);
-
-        var recover = secp256k1.recover(challenge, new Buffer(sign.signature, 'hex'), sign.recovery);
-
-        console.log(response);
-        console.log(recover);
 
         done();
 
     });
 
-    it('should create a app wallet and transfer 1 ether', function (done) {
+    it('should create passwordDelegate contract', function (done) {
 
-        wallet = new Wallet();
-        var transaction = web3.eth.sendTransaction({
-                from: web3.eth.coinbase,
-                to: wallet.address,
-                value: web3.toWei(1, "ether")
-            }
-        );
-
-        watch(transaction, function (err, res) {
-            console.log(err, res);
-            done();
-        })
-
-    });
-
-    it('should create passwordDelegate contract by wallet', function (done) {
+        if(passwordDelegateContract) return done();
 
         var abi = compiled.PasswordDelegate.info.abiDefinition;
         var code = compiled.PasswordDelegate.code;
 
-        console.log('challenge:', challenge.toString('hex'));
-
-        wallet.eth.contract(abi).new('0x' + challenge.toString('hex'), '0x' + response.toString('hex'), {
+        web3.eth.contract(abi).new('0x0000000000000000000000000000000000000000', '0x' + response.toString('hex'), '0x' + salt.toString('hex'), {
             gas: DEFAULT_GAS,
             data: code
         }, callback);
@@ -119,28 +109,42 @@ describe('PasswordDelegate', function () {
         };
     });
 
-    it('should execute challenge response', function (done) {
+    it('should execute validate response', function (done) {
 
-        var lala = passwordDelegateContract.getChallenge();
-        console.log('lala:', lala);
+        var salt = new Buffer(passwordDelegateContract.getSalt().slice(2), 'hex');
+        console.log('salt:', salt.toString('hex'));
 
         var challenge = new Buffer(passwordDelegateContract.getChallenge().slice(2), 'hex');
         console.log('challenge:', challenge.toString('hex'));
 
-        var privateKey = createPrivateKey(challenge, password);
+        var response = new Buffer(passwordDelegateContract.getResponse().slice(2), 'hex');
+        console.log('response:', response.toString('hex'));
+
+        var privateKey = createPrivateKey(password, salt);
         var sign = secp256k1.sign(challenge, privateKey);
 
         var v = sign.recovery + 27;
-        var r = sign.signature.slice(0, 32);
-        var s = sign.signature.slice(32, 64);
+        var r = '0x' + sign.signature.slice(0, 32).toString('hex');
+        var s = '0x' + sign.signature.slice(32, 64).toString('hex');
 
-        console.log(v,r,s);
+        console.log(v, r, s);
 
-        var validate = passwordDelegateContract.authorize(v, '0x' + r.toString('hex'), '0x' + s.toString('hex'));
-        console.log("validate:", validate);
+        var grant = '0x0000000000000000000000000000000000000000';
 
-        assert.equal('0x' + response.toString('hex'), validate);
+        passwordDelegateContract.authorize(v, r, s, grant, { gas: DEFAULT_GAS });
+        passwordDelegateContract.allEvents().watch(function(err, event){
+            if (err) return done(err)
 
-        done();
+            if(event.event == 'error'){
+                console.log('error:', event);
+                done();
+            }
+
+            if(event.event == 'success'){
+                console.log('success:', event);
+                done();
+            }
+        });
+
     });
 });
