@@ -9,7 +9,8 @@ var contracts = {
     app: require('./contracts/App.sol'),
     user: require('./contracts/User.sol'),
     grant: require('./contracts/Grant.sol'),
-    passwordDelegate: require('./contracts/PasswordDelegate.sol')
+    passwordDelegate: require('./contracts/PasswordDelegate.sol'),
+    bank: require('./contracts/Bank.sol')
 };
 
 var all = ""
