@@ -6,19 +6,15 @@ var ethereumjsUtil = require('ethereumjs-util');
 var secp256k1 = require('secp256k1');
 var crypto = require('crypto');
 
-var Watch = require('../src/watch');
-var Wallet = require('../src/wallet');
-
-var contracts = require('../src/contracts');
+var contracts = require('../../src/contracts');
 
 describe('PasswordDelegate', function () {
 
     this.timeout(1000000);
 
-    var DEFAULT_GAS = 5000000;
+    var DEFAULT_GAS = 500000;
 
     var web3 = new Web3();
-    var watch = new Watch(web3);
 
     var defaultProvider = new web3.providers.HttpProvider("http://128.199.53.68:8545")
 
@@ -64,7 +60,7 @@ describe('PasswordDelegate', function () {
 
     it('should create response', function (done) {
 
-        if(passwordDelegateContract) return done();
+        if (passwordDelegateContract) return done();
 
         var challenge = crypto.randomBytes(32);
         console.log('challenge:', challenge.toString('hex'));
@@ -87,12 +83,12 @@ describe('PasswordDelegate', function () {
 
     it('should create passwordDelegate contract', function (done) {
 
-        if(passwordDelegateContract) return done();
+        if (passwordDelegateContract) return done();
 
         var abi = compiled.PasswordDelegate.info.abiDefinition;
         var code = compiled.PasswordDelegate.code;
 
-        web3.eth.contract(abi).new('0x0000000000000000000000000000000000000000', '0x' + response.toString('hex'), '0x' + salt.toString('hex'), {
+        web3.eth.contract(abi).new('0x' + response.toString('hex'), '0x' + salt.toString('hex'), {
             gas: DEFAULT_GAS,
             data: code
         }, callback);
@@ -131,19 +127,13 @@ describe('PasswordDelegate', function () {
 
         var grant = '0x0000000000000000000000000000000000000000';
 
-        passwordDelegateContract.authorize(v, r, s, grant, { gas: DEFAULT_GAS });
-        passwordDelegateContract.allEvents().watch(function(err, event){
-            if (err) return done(err)
+        passwordDelegateContract.authorize(v, r, s, grant, {gas: DEFAULT_GAS});
+        passwordDelegateContract.allEvents().watch(function (err, event) {
+            if (err) return done(err);
 
-            if(event.event == 'error'){
-                console.log('error:', event);
-                done();
-            }
+            assert.equal('success', event.event)
+            done();
 
-            if(event.event == 'success'){
-                console.log('success:', event);
-                done();
-            }
         });
 
     });

@@ -3,12 +3,12 @@ var assert = require('assert');
 var Web3 = require('web3');
 var ethereumjsUtil = require('ethereumjs-util');
 
-var Watch = require('../src/watch');
-var Wallet = require('../src/wallet');
+var Watch = require('../../src/watch');
+var Wallet = require('../../src/wallet');
 
-var Banker = require('../src/banker'); 
+var Banker = require('../../src/banker');
 
-var contracts = require('../src/contracts');
+var contracts = require('../../src/contracts');
 
 describe('controlled funding', function () {
     

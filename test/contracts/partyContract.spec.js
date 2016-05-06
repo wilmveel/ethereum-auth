@@ -1,11 +1,13 @@
 var assert = require('assert');
 var Web3 = require('web3');
 
-var contracts = require('../src/contracts');
+var contracts = require('../../src/contracts');
 
 describe('Contracts', function () {
 
     this.timeout(1000000);
+
+    var DEFAULT_GAS = 500000;
 
     var web3 = new Web3();
 
@@ -16,8 +18,8 @@ describe('Contracts', function () {
 
     var compiled = web3.eth.compile.solidity(contracts);
 
-    var userAddress = '0xacadcd31b076ca2fc0e9269065cd06c52e1fe276';
-    var userContract;
+    var partyAddress;
+    var partyContract;
 
     function watch(transaction, callback) {
         var filter = web3.eth.filter("latest");
@@ -33,17 +35,17 @@ describe('Contracts', function () {
         });
     };
 
-    it('should create user contract', function (done) {
+    it('should create party contract', function (done) {
 
-        var abi = compiled.User.info.abiDefinition;
-        var code = compiled.User.code;
+        var abi = compiled.Party.info.abiDefinition;
+        var code = compiled.Party.code;
 
-        if(userAddress){
-            web3.eth.contract(abi).at(userAddress, callback);
+        if(partyAddress){
+            web3.eth.contract(abi).at(partyAddress, callback);
         }else{
             web3.eth.contract(abi).new({
                 from: web3.eth.coinbase,
-                gas: 5000000000000000,
+                gas: DEFAULT_GAS,
                 data: code
             }, callback);
         }
@@ -55,16 +57,16 @@ describe('Contracts', function () {
                 done(err);
             } else if (contract.address) {
                 console.log("Contract Created", contract.address);
-                userAddress = contract.address;
-                userContract = contract;
+                partyAddress = contract.address;
+                partyContract = contract;
                 done();
             }
         };
     });
 
     it('should create delegates', function (done) {
-        var user = userContract.createDelegate("1", {
-            gas: 5000000000000000
+       partyContract.enroll("1", {
+            gas: DEFAULT_GAS
         }, function (err, transaction) {
             watch(transaction, function () {
                 done();
@@ -73,8 +75,8 @@ describe('Contracts', function () {
     });
 
     it('should delete delegates', function (done) {
-        var user = userContract.deleteDelegate("1", {
-            gas: 5000000000000000
+        partyContract.abandon("1", {
+            gas: DEFAULT_GAS
         }, function (err, transaction) {
             watch(transaction, function () {
                 done();

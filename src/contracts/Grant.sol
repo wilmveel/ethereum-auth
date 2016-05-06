@@ -1,19 +1,28 @@
 contract Grant {
 
-    address app;
-    address user;
+    address client;
+    address owner;
 
-    function Grant() {
-        app = msg.sender;
+    function Grant(address _client) {
+        client = _client;
     }
 
+    /*
+     * authorize the grant contract
+     * this can only be done once
+     */
     function authorize() {
-        user = msg.sender;
+        if(msg.sender != owner) throw;
+        owner = msg.sender;
     }
 
-    function state() constant returns (address b, address a){
-        a = app;
-        b = user;
+    /*
+     * revoke the grant contract
+     * this can be done by the client or owner
+     */
+    function revoke() {
+        if(msg.sender != client &&  msg.sender != owner) throw;
+        suicide(msg.sender);
     }
 
 }

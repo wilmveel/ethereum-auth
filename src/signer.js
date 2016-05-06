@@ -11,15 +11,13 @@ module.exports = function (privateKey) {
 
         signTransaction: function (tx_params, callback) {
 
-            tx_params.gasPrice = '0xBA43B7400';
-            tx_params.gasLimit = '0x500000';
-
             console.log(tx_params);
+
+            tx_params.gasPrice = '0xBA43B7400';
+            tx_params.gasLimit = '0x50000';
 
             var tx = new ethereumjsTx(tx_params);
             tx.sign(privateKey);
-
-            var senderAddress = ethereumjsUtil.bufferToHex(tx.getSenderAddress());
 
             var buffer = new Buffer(tx.serialize());
             console.log(buffer.toString('hex'));

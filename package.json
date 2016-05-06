@@ -1,14 +1,22 @@
 {
-  "name": "ethereumjs-tx-test",
+  "name": "ethereum-auth",
   "version": "1.0.0",
   "description": "",
-  "main": "webpack.config.js",
+  "main": "./src/index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "angular": "^1.5.5",
+    "angular-animate": "^1.5.5",
+    "angular-aria": "^1.5.5",
+    "angular-material": "^1.0.8",
+    "angular-messages": "^1.5.5",
+    "angular-mocks": "^1.5.5",
+    "angular-route": "^1.5.5",
+    "angular-sanitize": "^1.5.5",
     "ethereumjs-tx": "^1.1.1",
     "ethereumjs-util": "^4.3.0",
     "express": "^4.13.4",

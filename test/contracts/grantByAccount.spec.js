@@ -3,14 +3,16 @@ var assert = require('assert');
 var Web3 = require('web3');
 var ethereumjsUtil = require('ethereumjs-util');
 
-var Watch = require('../src/watch');
-var Wallet = require('../src/wallet');
+var Watch = require('../../src/watch');
+var Wallet = require('../../src/wallet');
 
-var contracts = require('../src/contracts');
+var contracts = require('../../src/contracts');
 
 describe('GrantFlow', function () {
 
     this.timeout(1000000);
+
+    var DEFAULT_GAS = 50000;
 
     var web3 = new Web3();
     var watch = new Watch(web3);
@@ -69,7 +71,7 @@ describe('GrantFlow', function () {
         var code = compiled.Grant.code;
 
         appWallet.eth.contract(abi).new({
-            gas: 5000000000000000000000,
+            gas: DEFAULT_GAS,
             data: code
         }, function (err, contract) {
             if (err) {
@@ -77,7 +79,7 @@ describe('GrantFlow', function () {
                 done(err);
             } else if (contract.address) {
                 console.log("Contract Created", contract.address);
-                grantContract = contract.address;
+                grantContract = contract;
                 done();
             }
         });
@@ -88,14 +90,14 @@ describe('GrantFlow', function () {
         var abi = compiled.Grant.info.abiDefinition;
         var code = compiled.Grant.code;
 
-        userWallet.eth.contract(abi).at(grantContract, function (err, contract) {
+        userWallet.eth.contract(abi).at(grantContract.address, function (err, contract) {
             if (err) {
                 console.log("Contract creation error", err);
                 done(err);
             } else if (contract.address) {
                 console.log("Contract Fetch", contract.address);
                 contract.authorize({
-                    gas: 5000000000000000000000
+                    gas: DEFAULT_GAS
                 }, function (err, transaction) {
                     console.log(err, transaction);
                     watch(transaction, function (err, res) {
@@ -108,21 +110,36 @@ describe('GrantFlow', function () {
     });
 
 
-    it('should get state of grant contract', function (done) {
+    it('should revoke grant contract', function (done) {
 
         var abi = compiled.Grant.info.abiDefinition;
-        var code = compiled.Grant.code;
 
-        web3.eth.contract(abi).at(grantContract, function (err, contract) {
+        web3.eth.contract(abi).at(grantContract.address, function (err, contract) {
             if (err) {
                 console.log("Contract creation error", err);
                 done(err);
             } else if (contract.address) {
                 console.log("Contract Fetch", contract.address);
-                contract.state(function (err, res) {
+                contract.revoke(function (err, res) {
                     console.log('state', res);
-                    assert.equal(userWallet.address, res[0]);
-                    assert.equal(appWallet.address, res[1]);
+                    done();
+                });
+            }
+        });
+    });
+
+    it('should be removed', function (done) {
+
+        var abi = compiled.Grant.info.abiDefinition;
+
+        web3.eth.contract(abi).at(grantContract.address, function (err, contract) {
+            if (err) {
+                console.log("Contract creation error", err);
+                done(err);
+            } else if (contract.address) {
+                console.log("Contract Fetch", contract.address);
+                contract.revoke(function (err, res) {
+                    console.log('state', res);
                     done();
                 });
             }

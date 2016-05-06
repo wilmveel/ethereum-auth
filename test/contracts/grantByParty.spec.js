@@ -3,14 +3,14 @@ var assert = require('assert');
 var Web3 = require('web3');
 var ethereumjsUtil = require('ethereumjs-util');
 
-var Watch = require('../src/watch');
-var Wallet = require('../src/wallet');
+var Watch = require('../../src/watch');
+var Wallet = require('../../src/wallet');
 
-var contracts = require('../src/contracts');
+var contracts = require('../../src/contracts');
 
 describe('GrantFlow', function () {
 
-    this.timeout(1000000);
+    this.timeout(100000);
 
     var web3 = new Web3();
     var watch = new Watch(web3);
@@ -20,13 +20,15 @@ describe('GrantFlow', function () {
     web3.setProvider(defaultProvider);
     web3.eth.defaultAccount = web3.eth.coinbase;
 
+    var DEFAULT_GAS = 5000000;
+
     var compiled = web3.eth.compile.solidity(contracts);
 
     var appWallet;
-    var userWallet;
+    var partyWallet;
 
     var grantContract;
-    var userContract;
+    var partyContract;
 
     it('should create a app wallet and transfer 1 ether', function (done) {
 
@@ -46,12 +48,12 @@ describe('GrantFlow', function () {
 
     });
 
-    it('should create a user wallet and transfer 1 ether', function (done) {
+    it('should create a party wallet and transfer 1 ether', function (done) {
 
-        userWallet = new Wallet();
+        partyWallet = new Wallet();
         var transaction = web3.eth.sendTransaction({
                 from: web3.eth.coinbase,
-                to: userWallet.address,
+                to: partyWallet.address,
                 value: web3.toWei(1, "ether")
             }
         )
@@ -70,7 +72,7 @@ describe('GrantFlow', function () {
         var code = compiled.Grant.code;
 
         appWallet.eth.contract(abi).new({
-            gas: 5000000000000000000000,
+            gas: DEFAULT_GAS,
             data: code
         }, function (err, contract) {
             if (err) {
@@ -84,13 +86,13 @@ describe('GrantFlow', function () {
         });
     });
 
-    it('should create user contract by user', function (done) {
+    it('should create party contract by party', function (done) {
 
-        var abi = compiled.User.info.abiDefinition;
-        var code = compiled.User.code;
+        var abi = compiled.Party.info.abiDefinition;
+        var code = compiled.Party.code;
 
-        userWallet.eth.contract(abi).new({
-            gas: 5000000000000000000000,
+        partyWallet.eth.contract(abi).new({
+            gas: DEFAULT_GAS,
             data: code,
         }, function (err, contract) {
             if (err) {
@@ -98,25 +100,24 @@ describe('GrantFlow', function () {
                 done(err);
             } else if (contract.address) {
                 console.log("Contract Created", contract.address);
-                userContract = contract.address;
+                partyContract = contract.address;
                 done();
             }
         });
     });
 
-    it('should authorize grant contract by user contract', function (done) {
+    it('should authorize grant contract by party contract', function (done) {
 
-        var abi = compiled.User.info.abiDefinition;
-        var code = compiled.User.code;
+        var abi = compiled.Party.info.abiDefinition;
 
-        userWallet.eth.contract(abi).at(userContract, function (err, contract) {
+        partyWallet.eth.contract(abi).at(partyContract, function (err, contract) {
             if (err) {
                 console.log("Contract creation error", err);
                 done(err);
             } else if (contract.address) {
                 console.log("Contract Fetch", contract.address);
                 contract.authorize(grantContract, {
-                    gas: 5000000000000000000000
+                    gas: DEFAULT_GAS
                 }, function (err, transaction) {
                     console.log(err, transaction);
                     watch(transaction, function (err, res) {
@@ -127,28 +128,5 @@ describe('GrantFlow', function () {
             }
         });
     });
-
-
-    it('should get state of grant contract', function (done) {
-
-        var abi = compiled.Grant.info.abiDefinition;
-        var code = compiled.Grant.code;
-
-        web3.eth.contract(abi).at(grantContract, function (err, contract) {
-            if (err) {
-                console.log("Contract creation error", err);
-                done(err);
-            } else if (contract.address) {
-                console.log("Contract Fetch", contract.address);
-                contract.state(function (err, res) {
-                    console.log('state', res);
-                    assert.equal(userContract, res[0]);
-                    assert.equal(appWallet.address, res[1]);
-                    done();
-                });
-            }
-        });
-    });
-
 
 });
