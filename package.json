@@ -30,5 +30,8 @@
     "web3": "^0.15.3",
     "webpack": "^1.12.14",
     "webpack-dev-middleware": "^1.5.1"
+  },
+  "browserify": {
+    "transform": [ "stringify" ]
   }
 }
