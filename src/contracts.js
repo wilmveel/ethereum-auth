@@ -5,6 +5,7 @@ var contracts = {
     delegate: require('./contracts/Delegate.sol'),
     passwordDelegate: require('./contracts/PasswordDelegate.sol'),
     //bank: require('./contracts/Bank.sol')
+    registrar: require('./contracts/PartyRegistrar.sol'),
 };
 
 var all = ""
